@@ -68,10 +68,13 @@ public:
     void getGreedyPath(std::vector<int> &path, int &totalWeight, int startVertex);
 
     // method to optimize path by using tabu search algorithm
-    void tabuSearch(std::vector<int> &path, int &totalWeight, int startVertex);
+    void tabuSearch(std::vector<int> &path, int &totalWeight, int startVertex, long &time);
 
     // method to optimize path by using simulated annealing algorithm
-    void simulatedAnnealing(std::vector<int> &path, int &totalWeight, int startVertex);
+    void simulatedAnnealing(std::vector<int> &path, int &totalWeight, int startVertex, long &time);
+
+    // method to calculate initial temperature
+    double calculateInitialTemperature();
 
 private:
     // store the weights of edges between vertices
@@ -84,7 +87,7 @@ private:
     int neighborhoodChoice = 1;
 
     // cooling rate
-    double alpha = 0.999; 
+    double alpha = 0.99; 
     
     // initial temperature
     double temperature = 1000; 

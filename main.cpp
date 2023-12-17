@@ -28,7 +28,10 @@ std::vector<MenuItem> mainMenuItems = {{"read from file", {}},
                                        {"simulated annealing algorithm", {saAlgorithmOptions}},
                                        {"exit", {}}};
 
-std::vector<MenuItem> testMenuItems = {{"exit", {}}};
+std::vector<MenuItem> testMenuItems = {
+    {"test tabu search", {}},
+    {"test simulated annealing", {}},
+    {"exit", {}}};
 
 int main(int argc, char const *argv[])
 {

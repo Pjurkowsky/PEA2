@@ -160,14 +160,17 @@ void Graph::getGreedyPath(std::vector<int> &path, int &totalWeight, int startVer
 }
 
 // tabu search algorithm
-void Graph::tabuSearch(std::vector<int> &path, int &totalWeight, int startVertex)
-{   
-    // get greedy path as starting solution
-    getGreedyPath(path, totalWeight, startVertex);
-
+void Graph::tabuSearch(std::vector<int> &path, int &totalWeight, int startVertex, long &time)
+{
     RandomGenerator random;
+
+    // get greedy path as starting solution
+    getGreedyPath(path, totalWeight, 0);
+
     std::vector<std::vector<int>> tabuList;
     tabuList.reserve(numVertices);
+
+    tabuList.push_back(path);
 
     // select neighborhood solver based on neighborhood choice
     NeighborhoodSolver *neighborhoodSolver;
@@ -179,15 +182,17 @@ void Graph::tabuSearch(std::vector<int> &path, int &totalWeight, int startVertex
         neighborhoodSolver = new NeigborhoodSwapSolver();
 
     int iterationsWithoutImprovement = 0;
-
+    int iterations = 0;
     // number of iterations without improvement after which we diversify
-    const int diversificationInterval = 20;
+    const int diversificationInterval = 5;
+    const int tabuTenure = 20000;
 
     auto currentTime = std::chrono::high_resolution_clock::now();
 
     // run until stop time is reached
     while (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - currentTime).count() < stopTime)
     {
+
         // get neighborhood of current solution
         std::vector<std::vector<int>> neighborhood = neighborhoodSolver->getNeighborhood(path);
 
@@ -208,50 +213,54 @@ void Graph::tabuSearch(std::vector<int> &path, int &totalWeight, int startVertex
             int neighborCost = getPathCost(neighbor);
 
             // if neighbor is better than current solution and is not in tabu list
-            if (neighborCost < pathCost && std::find(tabuList.begin(), tabuList.end(), neighbor) == tabuList.end())
+            if (neighborCost < pathCost)
             {
-                path = neighbor;
-                pathCost = neighborCost;
-                iterationsWithoutImprovement = 0; // Reset counter
+                if (std::find(tabuList.begin(), tabuList.end(), neighbor) == tabuList.end())
+                {
+                    path = neighbor;
+                    pathCost = neighborCost;
+                    iterationsWithoutImprovement = 0; // Reset counter
+                }
             }
         }
 
         // if current solution is better than best solution so far, update best solution
-        // and clear tabu list
         if (pathCost < totalWeight)
         {
             totalWeight = pathCost;
-            tabuList.clear();
+            time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - currentTime).count();
         }
 
         // add current solution to tabu list
         tabuList.push_back(path);
-
         // if tabu list is full, remove oldest solution
-        if (tabuList.size() > numVertices)
+        if (tabuList.size() > tabuTenure)
             tabuList.erase(tabuList.begin());
 
         // increment iterations without improvement
         iterationsWithoutImprovement++;
+        iterations++;
     }
 
     // delete neighborhood solver
     delete neighborhoodSolver;
 }
 
-void Graph::simulatedAnnealing(std::vector<int> &path, int &totalWeight, int startVertex)
+void Graph::simulatedAnnealing(std::vector<int> &path, int &totalWeight, int startVertex, long &time)
 {
-    // get greedy path as starting solution
-    getGreedyPath(path, totalWeight, startVertex); 
-
     RandomGenerator random;
+    double currTemperature = temperature;
+    std::cout << "Initial temperature: " << currTemperature << std::endl;
+    // get greedy path as starting solution
+    getGreedyPath(path, totalWeight, random.generateRandomInt(0, numVertices - 1));
+
+    std::cout << "total weight: " << totalWeight << std::endl;
+    // select neighborhood solver based on neighborhood choice
+    NeighborhoodSolver *neighborhoodSolver = new NeigborhoodInsertSolver();
+
+    int iterations = 0;
 
     auto currentTime = std::chrono::high_resolution_clock::now();
-
-    NeighborhoodSolver *neighborhoodSolver;
-    if (neighborhoodChoice == 2)
-        neighborhoodSolver = new NeigborhoodInsertSolver();
-
     // run until stop time is reached
     while (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - currentTime).count() < stopTime)
     {
@@ -265,32 +274,67 @@ void Graph::simulatedAnnealing(std::vector<int> &path, int &totalWeight, int sta
         int pathCost = getPathCost(path);
         int neighborCost = getPathCost(neighbor);
 
+        std::cout << "path cost: " << pathCost << std::endl;
+        std::cout << "neighbor cost: " << neighborCost << std::endl;
+
         // if neighbor is better than current solution, update current solution
-        if (neighborCost < pathCost)
+        double probability = exp(-1*(neighborCost - pathCost) / currTemperature);
+
+        if (neighborCost < pathCost || random.generateRandomInt(0, 100) < probability * 100)
         {
             path = neighbor;
             pathCost = neighborCost;
-        }
-        // if neighbor is worse than current solution, update current solution with probability
-        // based on temperature
-        else
-        {
-            double probability = exp((pathCost - neighborCost) / temperature);
-            if (random.generateRandomInt(0, 100) < probability * 100)
+            // std::cout << pathCost << std::endl;
+            if (pathCost < totalWeight)
             {
-                path = neighbor;
-                pathCost = neighborCost;
+                totalWeight = pathCost;
+                time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - currentTime).count();
+                std::cout << " iterations: " << iterations << "temperature: " << currTemperature << " time: " << time << " total weight: " << totalWeight << std::endl;
             }
         }
 
         // if current solution is better than best solution so far, update best solution
-        if (pathCost < totalWeight)
-            totalWeight = pathCost;
 
         // update temperature
-        temperature *= alpha;
+
+        currTemperature *= alpha;
+        iterations++;
     }
 
     // delete neighborhood solver
     delete neighborhoodSolver;
+}
+
+double Graph::calculateInitialTemperature()
+{
+    RandomGenerator random;
+    double totalDifference = 0;
+    int numIterations = 1000;
+
+    for (int i = 0; i < numIterations; i++)
+    {
+        std::vector<int> path;
+        int totalWeight = 0;
+
+        getGreedyPath(path, totalWeight, 0);
+
+        std::vector<std::vector<int>> neighborhood = NeigborhoodInsertSolver().getNeighborhood(path);
+        std::vector<int> neighbor = neighborhood[random.generateRandomInt(0, neighborhood.size() - 1)];
+
+        int pathCost = getPathCost(path);
+        int neighborCost = getPathCost(neighbor);
+
+        totalDifference += abs(neighborCost - pathCost);
+    }
+
+    double averageDifference = totalDifference / numIterations;
+
+    // Adjust this factor based on your problem characteristics
+    double initialTemperatureFactor = 0.5;
+
+    // Adjust this factor based on your desired acceptance probability at the beginning
+    double acceptanceProbabilityFactor = 0.8;
+
+    double initialTemperature = averageDifference / (-log(acceptanceProbabilityFactor) * initialTemperatureFactor);
+    return initialTemperature;
 }

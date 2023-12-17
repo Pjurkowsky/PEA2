@@ -15,10 +15,15 @@ public:
     void generateGraph(Graph *graph);              // method for generating graph
     void printResultsToFile(std::string fileName); // method for printing results to file
 
+    Graph* loadGraphFromFile(std::string fileName); // method for loading graph from file
+
+    void testTabuSearch(std::string fileName, int stopTime, int neighborhoodChoice);             // method for testing tabu search
+    void testSimulatedAnnealing(std::string fileName, int stopTime, int neighborhoodChoice); // method for testing simulated annealing
 private:
     int numOfTests;
-    std::vector<int> numbersOfVertices;
-    std::vector<double> times;
+    std::vector<std::vector<int>> paths;
+    std::vector<int> totalWeights;
+    std::vector<long> times;
 };
 
 #endif

@@ -129,8 +129,10 @@ bool Menu::run()
                 {
                     std::vector<int> path;
                     int totalWeight = 0;
-                    graph->tabuSearch(path, totalWeight, 0);
+                    long time = 0;
+                    graph->tabuSearch(path, totalWeight, 0, time);
                     std::cout << "Total cost: " << totalWeight << '\n';
+                    std::cout << "Best solution found in " << time  << " miliseconds" << '\n';
                     std::cout << "Path: ";
                     for (auto &vertex : path)
                         std::cout << vertex << " ";
@@ -141,13 +143,64 @@ bool Menu::run()
                 {
                     std::vector<int> path;
                     int totalWeight = 0;
-                    graph->simulatedAnnealing(path, totalWeight, 0);
+                    long time = 0;
+                    graph->simulatedAnnealing(path, totalWeight, 0, time);
                     std::cout << "Total cost: " << totalWeight << '\n';
                     std::cout << "Path: ";
                     for (auto &vertex : path)
                         std::cout << vertex << " ";
                     std::cout << '\n';
                      waitForUser();
+                }
+                else if (chosenItemString == "test tabu search")
+                {
+                    Tester tester(10);
+
+                    // tester.testTabuSearch("ftv47.atsp", 120, 1);
+                    // std::cout << "Results printed to file" << '\n';
+
+                    // tester.testTabuSearch("ftv47.atsp", 120, 2);
+                    // std::cout << "Results printed to file" << '\n';
+
+                    // tester.testTabuSearch("ftv47.atsp", 120, 3);
+                    // std::cout << "Results printed to file" << '\n';
+
+                    // tester.testTabuSearch("ftv170.atsp", 240, 1);
+                    // std::cout << "Results printed to file" << '\n';
+
+                    // tester.testTabuSearch("ftv170.atsp", 240, 2);
+                    // std::cout << "Results printed to file" << '\n';
+
+                    // tester.testTabuSearch("ftv170.atsp", 240, 3);
+                    // std::cout << "Results printed to file" << '\n';
+
+
+                    tester.testTabuSearch("rbg403.atsp", 360, 1);
+                    std::cout << "Results printed to file" << '\n';
+
+                    tester.testTabuSearch("rbg403.atsp", 360, 2);
+                    std::cout << "Results printed to file" << '\n';
+
+                    tester.testTabuSearch("rbg403.atsp", 360, 3);
+                    std::cout << "Results printed to file" << '\n';
+                    waitForUser();
+                }
+                else if (chosenItemString == "test simulated annealing")
+                {
+                    Tester tester(10);
+
+                    tester.testSimulatedAnnealing("ftv170.atsp", 240, 2);
+                    std::cout << "Results printed to file" << '\n';
+
+                    // tester.testSimulatedAnnealing("rbg403.atsp", 360, 2);
+                    //  std::cout << "Results printed to file" << '\n';
+
+
+                }
+                else if (chosenItemString == "display graph")
+                {
+                    std::cout << graph->toString() << '\n';
+                    waitForUser();
                 }
                 else
                 {

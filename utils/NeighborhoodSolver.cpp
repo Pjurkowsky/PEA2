@@ -18,7 +18,6 @@ private:
 
 class NeigborhoodSwapSolver : public NeighborhoodSolver
 {
-
 public:
     std::vector<std::vector<int>> getNeighborhood(const std::vector<int> &path)
     {
